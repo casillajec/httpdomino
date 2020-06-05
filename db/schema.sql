@@ -1,27 +1,27 @@
 CREATE TABLE IF NOT EXISTS stone (
-	id    SERIAL,
-	value TEXT   NOT NULL,
+	id  SERIAL,
+	val VARCHAR(3)  NOT NULL UNIQUE,
 
 	PRIMARY KEY (id)
 );
 
 CREATE TABLE IF NOT EXISTS placement (
-	id    SERIAL,
-	value TEXT   NOT NULL,
+	id  SERIAL,
+	val VARCHAR(5) NOT NULL UNIQUE,
 
 	PRIMARY KEY (id)
 );
 
 CREATE TABLE IF NOT EXISTS game_status (
-	id    SERIAL,
-	value TEXT   NOT NULL,
+	id  SERIAL,
+	val TEXT   NOT NULL UNIQUE,
 
 	PRIMARY KEY (id)
 );
 
 CREATE TABLE IF NOT EXISTS users (
-	id SERIAL,
-	name TEXT NOT NULL,
+	id        SERIAL,
+	user_name TEXT   NOT NULL,
 
 	PRIMARY KEY (id)
 );

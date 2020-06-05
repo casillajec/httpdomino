@@ -11,7 +11,6 @@ with open('client/index.html', 'r') as f:
 
 @app.route('/')
 def index():
-
 	return index_html
 
 if __name__ == '__main__':
