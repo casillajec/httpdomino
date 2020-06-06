@@ -18,10 +18,11 @@ Stone.prototype = {
 	}
 }
 
-var Hand = function(stones) {
+var Player = function(name, stones) {
+	this.name = name;
 	this.stones = stones;
 }
-Hand.prototype = {
+Player.prototype = {
 	hasNmbr: function(nmbr) {
 		return this.stones.some(function(stone) {
 			return stone.hasNmbr(nmbr);
@@ -48,28 +49,6 @@ Hand.prototype = {
 	}
 }
 
-var Player = function(name, hand) {
-	this.name = name;
-	this.hand = hand;
-}
-Player.prototype = {
-	hasNmbr: function(nmbr) {
-		return this.hand.hasNmbr(nmbr);
-	},
-	
-	hasStone: function(nmbr1, nmbr2) {
-		return this.hand.hasStone(nmbr1, nmbr2);
-	},
-	
-	getStone: function(nmbr1, nmbr2) {
-		return this.hand.getStone(nmbr1, nmbr2);
-	},
-	
-	removeStone: function(stone) {
-		this.hand.removeStone(stone);
-	}
-}
-
 // Should be initialized with currentPlayer
 var GameState = function(players) {
 	this.players = players;
@@ -77,6 +56,7 @@ var GameState = function(players) {
 	for (let i = 0; i < players.length; i++) {
 		
 		if (this.players[i].hasStone(6, 6)) {
+			this.doubleDinner = this.players[i].getStone(6, 6);
 			this.activePlayer = i;
 			this.currentPlayer = players[i];
 			break;
@@ -87,35 +67,13 @@ var GameState = function(players) {
 
 GameState.prototype = {
 	board: [],
+
+	doubleDinner: null,
 	
 	nextPlayer: function() {
-		
-		let player = this.players[this.activePlayer];
-		let playerDiv = document.getElementById('player-' + player.name);
-		let stoneButtons = playerDiv.getElementsByClassName('stone-button');
-		for (var stoneButton of stoneButtons) {
-			stoneButton.disabled = true;
-		}
-		
 		this.activePlayer += 1
 		if (this.activePlayer > this.players.length - 1) {
 			this.activePlayer = 0;
-		}
-		
-		player = this.players[this.activePlayer];
-		console.log(player.name);
-		playerDiv = document.getElementById('player-' + player.name);
-		stoneButtons = playerDiv.getElementsByClassName('stone-button');
-		let options = this.options();
-		
-		for (var stoneButton of stoneButtons) {
-			//console.log(stoneButton.dataset.sideup + ' | ' + stoneButton.dataset.sidedown);
-			if (options.includes(parseInt(stoneButton.dataset.sideup)) ||
-				options.includes(parseInt(stoneButton.dataset.sidedown))) {
-				stoneButton.disabled = false;
-			} else {
-				stoneButton.disabled = true;
-			}
 		}
 	},
 	
@@ -183,9 +141,7 @@ players = [];
 const startingPlayer = -1;
 for (var k = 0; k < nPlayers; k++){
 	players.push(
-		new Player(
-			name = playerNames[k],
-			hand = new Hand(stones.slice(k*handSize, (k+1)*handSize))
+		new Player(playerNames[k], stones.slice(k*handSize, (k+1)*handSize)
 		)
 	)
 }
@@ -196,49 +152,43 @@ const boardDiv = document.getElementById('board');
 const playersDiv = document.getElementById('players');
 var doubleSizaButton;
 
-function getBoardString(board) {
-	let boardString = ''
-	
-	for (let stone of board) {
-		boardString += stone.toStr() + ' ';
-	}
-	
-	return boardString;
-}
+var app = new Vue({
+	el: '#app',
+	data: function() {
+		return {
+			gameState: new GameState(players)
+		};
+	},
 
-for (let player of gameState.players) {
-	let playerDiv = document.createElement('div');
-	let playerNameP = document.createElement('p');
-	playerNameP.innerHTML = player.name;
-	playerDiv.appendChild(playerNameP);
-	playerDiv.id = 'player-' + player.name;
-	
-	for (let stone of player.hand.stones) {
-		let stoneButton = document.createElement('button');
-		stoneButton.disabled = true;
-		stoneButton.innerHTML = stone.toStr();
-		stoneButton.dataset.sideup = stone.sideup;
-		stoneButton.dataset.sidedown = stone.sidedown;
-		stoneButton.className = 'stone-button';
-		
-		stoneButton.onclick = function(evt) {
-			/*let stoneP = document.createElement('p');
-			stoneP.innerHTML = stone.toStr();
-			boardDiv.appendChild(stoneP);*/
-			
-			player.removeStone(stone);		
-			playerDiv.removeChild(stoneButton);
-			gameState.addStone(stone);
-			gameState.nextPlayer();
-			boardDiv.innerHTML = getBoardString(gameState.board);
-		}
-		
-		if (stone.is(6, 6)) {
-			doubleSizaButton = stoneButton;
-		}
-		playerDiv.appendChild(stoneButton);
-	}
-	playersDiv.appendChild(playerDiv)
-}
+	methods: {
+		stoneOnClick: function(stone) {
+			let player = this.gameState.getActivePlayer();
+			player.removeStone(stone);
+			this.gameState.addStone(stone);
+			this.gameState.nextPlayer();
+		},
 
-doubleSizaButton.onclick();
+		stoneDisabled: function(player, stone) {
+			if (this.gameState.getActivePlayer() != player) {
+				return true;
+			}
+
+			let options = this.gameState.options();
+
+			if (options.includes(stone.sideup) ||
+				options.includes(stone.sidedown)) {
+				return false;
+			} else {
+				return true;
+			}
+		}
+	},
+
+	mounted: function() {
+		let player = this.gameState.getActivePlayer();
+		player.removeStone(this.gameState.doubleDinner);
+		this.gameState.addStone(this.gameState.doubleDinner);
+		this.gameState.doubleDinner = null;
+		this.gameState.nextPlayer();
+	}
+});

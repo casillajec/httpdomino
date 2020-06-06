@@ -15,8 +15,25 @@
 	</head>
 	
 	<body>
-		<div id="board"></div>
-		<div id="players"></div>
+		<div id="app">
+			<div id="board">
+				<span v-for="stone in gameState.board">{{stone.toStr()}}</span>
+			</div>
+
+			<div id="players">
+				<div v-for="player in gameState.players">
+					<p>{{player.name}}</p>
+						<button v-for="stone in player.stones"
+								@click="stoneOnClick(stone)"
+								:disabled="stoneDisabled(player, stone)">
+							{{stone.toStr()}}
+						</button>
+				</div>
+			
+			</div>
+		</div>
+		
+		<script src="https://cdn.jsdelivr.net/npm/vue"></script>
 		<script type="application/javascript" src="axios.js"></script>
 		<script type="application/javascript" src="main.js"></script>
 	</body>
