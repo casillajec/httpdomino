@@ -14,7 +14,7 @@ Stone.prototype = {
 	},
 	
 	toStr: function() {
-		return this.sideup + ' | ' + this.sidedown;
+		return '[' + this.sideup + '|' + this.sidedown + ']';
 	}
 }
 
@@ -49,6 +49,120 @@ Player.prototype = {
 	}
 }
 
+var DominoTreeNode = function(stone, parent_node) {
+	this.stone = stone;
+	this.parent_node = parent_node;
+	parent_node.child_node = this;
+}
+
+DominoTreeNode.prototype = {
+	parent_node: null,
+	child_node: null,
+	stone: null,
+}
+
+var DominoTree = function() {}
+DominoTree.prototype = {
+	root: null,
+	left: null,
+	right: null,
+
+	empty: function() {
+		return !this.root;
+	},
+
+	addStone: function(stone, placement) {
+		if (this.empty()) {
+			this.root = {stone: stone};
+			return;
+		}
+		
+		let tmp = this[placement];
+		if (!tmp) {
+			this[placement] = new DominoTreeNode(stone, this);
+			return;
+		}
+
+		while (tmp.child_node) { tmp = tmp.child_node }
+		tmp.child_node = new DominoTreeNode(stone, tmp);
+	},
+
+	getFreeNmbrs: function() {
+		if (this.empty()){
+			return [];
+		}
+
+		let freeNmbrs = [this.root.stone.sideup, this.root.stone.sidedown];
+
+		let tmp = this.left;
+		let prev = this.root;
+		while (tmp) {
+			if ([prev.stone.sideup, prev.stone.sidedown].includes(tmp.stone.sideup)) {
+				freeNmbrs[0] = tmp.stone.sidedown;
+			} else {
+				freeNmbrs[0] = tmp.stone.sideup;
+			}
+			prev = tmp;
+			tmp = tmp.child_node;
+		}
+
+		tmp = this.right;
+		prev = this.root;
+		while (tmp) {
+			if ([prev.stone.sideup, prev.stone.sidedown].includes(tmp.stone.sideup)) {
+				freeNmbrs[1] = tmp.stone.sidedown;
+			} else {
+				freeNmbrs[1] = tmp.stone.sideup;
+			}
+			prev = tmp;
+			tmp = tmp.child_node;
+		}
+
+		return freeNmbrs;
+	},
+
+	toStr: function() {
+		if (this.empty()) {
+			return '';
+		}
+
+		let flattened = [this.root.stone.toStr()];
+
+		let tmp = this.left;
+		let tmpStr = '[/]';
+		let prev = this.root;
+		while (tmp) {
+			if ([prev.stone.sideup, prev.stone.sidedown].includes(tmp.stone.sideup)) {
+				tmpStr = '[' + tmp.stone.sidedown + '|' + tmp.stone.sideup + ']';
+			} else {
+				tmpStr = '[' + tmp.stone.sideup + '|' + tmp.stone.sidedown + ']';
+			}
+			flattened.unshift(tmpStr);
+			prev = tmp;
+			tmp = tmp.child_node;
+		}
+
+		tmp = this.right;
+		tmpStr = '[/]';
+		prev = this.root;
+		while (tmp) {
+			if ([prev.stone.sideup, prev.stone.sidedown].includes(tmp.stone.sideup)) {
+				tmpStr = '[' + tmp.stone.sideup + '|' + tmp.stone.sidedown + ']';
+			} else {
+				tmpStr = '[' + tmp.stone.sidedown + '|' + tmp.stone.sideup + ']';
+			}
+			flattened.push(tmpStr);
+			prev = tmp;
+			tmp = tmp.child_node;
+		}
+
+		let str = '';
+		for (stoneStr of flattened) { str += stoneStr + ' '; }
+
+		return str;
+	}
+}
+
 // Should be initialized with currentPlayer
 var GameState = function(players) {
 	this.players = players;
@@ -66,7 +180,7 @@ var GameState = function(players) {
 }
 
 GameState.prototype = {
-	board: [],
+	board: new DominoTree(),
 
 	doubleDinner: null,
 	
@@ -80,42 +194,6 @@ GameState.prototype = {
 	getActivePlayer: function() {
 		return this.players[this.activePlayer];
 	},
-	
-	options: function() {
-		if (this.board.length == 0 || this.board.length == 1) {
-			return [6];
-		}
-		
-		let options = [];
-		if (this.board[0].sideup != this.board[1].sideup &&
-		    this.board[0].sideup != this.board[1].sidedown)
-			options.push(this.board[0].sideup)
-		else
-			options.push(this.board[0].sidedown)
-		
-		lst = this.board.length - 1;
-		if (this.board[lst].sideup != this.board[lst - 1].sideup &&
-		    this.board[lst].sideup != this.board[lst - 1].sidedown)
-		    options.push(this.board[lst].sideup)
-		else
-			options.push(this.board[lst].sideup)
-			
-		return options;
-	},
-	
-	addStone: function(stone) {
-		if (this.board.length == 0) {
-			this.board.push(stone);
-			return;
-		}
-		
-		if (this.board[0].hasNmbr(stone.sideup) ||
-		    this.board[0].hasNmbr(stone.sidedown))
-			this.board.unshift(stone);
-		else
-			this.board.push(stone);
-		
-	}
 }
 
 // This should be handled by the server ================================
@@ -156,16 +234,27 @@ var app = new Vue({
 	el: '#app',
 	data: function() {
 		return {
-			gameState: new GameState(players)
+			gameState: new GameState(players),
+
+			placingStone: false,
+
+			selectedStone: null
 		};
 	},
 
 	methods: {
 		stoneOnClick: function(stone) {
+			this.selectedStone = stone;
+			this.placingStone = true;
+		},
+
+		placeStone: function(stone, placement) {
 			let player = this.gameState.getActivePlayer();
 			player.removeStone(stone);
-			this.gameState.addStone(stone);
+			this.gameState.board.addStone(stone, placement);
 			this.gameState.nextPlayer();
+			this.selectedStone = null;
+			this.placingStone = false;
 		},
 
 		stoneDisabled: function(player, stone) {
@@ -173,7 +262,7 @@ var app = new Vue({
 				return true;
 			}
 
-			let options = this.gameState.options();
+			let options = this.gameState.board.getFreeNmbrs();
 
 			if (options.includes(stone.sideup) ||
 				options.includes(stone.sidedown)) {
@@ -181,13 +270,38 @@ var app = new Vue({
 			} else {
 				return true;
 			}
+		},
+
+		stoneInSide: function(stone, side) {
+			if (!stone) {
+				return false;
+			}
+
+			let freeNmbrs = this.gameState.board.getFreeNmbrs();
+			
+			return [stone.sideup, stone.sidedown].includes(freeNmbrs[side]);
+		},
+
+		passDisable: function(player) {
+			if (this.gameState.getActivePlayer() != player) {
+				return true;
+			}
+			
+			let freeNmbrs = this.gameState.board.getFreeNmbrs();
+			return !player.stones.every(function(stone) {
+				return (!stone.hasNmbr(freeNmbrs[0]) && !stone.hasNmbr(freeNmbrs[1]));
+			});
+		},
+
+		passTurn: function() {
+			this.gameState.nextPlayer();
 		}
 	},
 
 	mounted: function() {
 		let player = this.gameState.getActivePlayer();
 		player.removeStone(this.gameState.doubleDinner);
-		this.gameState.addStone(this.gameState.doubleDinner);
+		this.gameState.board.addStone(this.gameState.doubleDinner);
 		this.gameState.doubleDinner = null;
 		this.gameState.nextPlayer();
 	}

@@ -17,17 +17,30 @@
 	<body>
 		<div id="app">
 			<div id="board">
-				<span v-for="stone in gameState.board">{{stone.toStr()}}</span>
+				<button :disabled="!(placingStone && stoneInSide(selectedStone, 0))"
+						@click="placeStone(selectedStone, 'left')">
+					(-
+				</button>
+
+				<p>{{ gameState.board.toStr() }}</p>
+
+				<button :disabled="!(placingStone && stoneInSide(selectedStone, 1))"
+						@click="placeStone(selectedStone, 'right')">
+					-)
+				</button>
 			</div>
 
 			<div id="players">
-				<div v-for="player in gameState.players">
-					<p>{{player.name}}</p>
+					<div v-for="player in gameState.players"
+						 :style="{backgroundColor: player == gameState.getActivePlayer() ? 'coral' : 'white'}">
+						<p>{{player.name}}</p>
 						<button v-for="stone in player.stones"
 								@click="stoneOnClick(stone)"
 								:disabled="stoneDisabled(player, stone)">
 							{{stone.toStr()}}
 						</button>
+						<button :disabled="passDisable(player)"
+								@click="passTurn">Paso</button>
 				</div>
 			
 			</div>
