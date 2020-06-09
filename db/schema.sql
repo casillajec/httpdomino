@@ -1,37 +1,42 @@
 CREATE TABLE IF NOT EXISTS stone (
-	id  SERIAL,
-	val VARCHAR(3)  NOT NULL UNIQUE,
+	--id  SERIAL,
+	id  INTEGER PRIMARY KEY AUTOINCREMENT,
+	val VARCHAR(3)  NOT NULL UNIQUE
 
-	PRIMARY KEY (id)
+	--PRIMARY KEY (id),
 );
 
 CREATE TABLE IF NOT EXISTS placement (
-	id  SERIAL,
-	val VARCHAR(5) NOT NULL UNIQUE,
+	--id  SERIAL,
+	id  INTEGER PRIMARY KEY AUTOINCREMENT,
+	val VARCHAR(5) NOT NULL UNIQUE
 
-	PRIMARY KEY (id)
+	--PRIMARY KEY (id)
 );
 
 CREATE TABLE IF NOT EXISTS game_status (
-	id  SERIAL,
-	val TEXT   NOT NULL UNIQUE,
+	--id  SERIAL,
+	id  INTEGER PRIMARY KEY AUTOINCREMENT,
+	val TEXT   NOT NULL UNIQUE
 
-	PRIMARY KEY (id)
+	--PRIMARY KEY (id)
 );
 
 CREATE TABLE IF NOT EXISTS users (
-	id        SERIAL,
-	user_name TEXT   NOT NULL,
+	--id        SERIAL,
+	id        INTEGER PRIMARY KEY AUTOINCREMENT,
+	user_name TEXT   NOT NULL
 
-	PRIMARY KEY (id)
+	--PRIMARY KEY (id)
 );
 
 CREATE TABLE IF NOT EXISTS game_session (
-	id             SERIAL,
+	--id             SERIAL,
+	id             INTEGER PRIMARY KEY AUTOINCREMENT,
 	game_status_id BIGINT    NOT NULL,
 	tstamp         TIMESTAMP NOT NULL,
 
-	PRIMARY KEY (id),
+	--PRIMARY KEY (id),
 
 	FOREIGN KEY (game_status_id)
 		REFERENCES game_status (id)

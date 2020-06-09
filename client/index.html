@@ -3,51 +3,33 @@
 	<head>
 		<title> MEGMINO </title>
 		
-		<style>
-			#board {
-				display: flex;
-			}
-			
-			#board p {
-				margin: 5px;
-			}
-		</style>
+		<link rel="stylesheet" href="style.css">
 	</head>
 	
 	<body>
 		<div id="app">
-			<div id="board">
-				<button :disabled="!(placingStone && stoneInSide(selectedStone, 0))"
-						@click="placeStone(selectedStone, 'left')">
-					(-
-				</button>
+			<login v-if="display === 'login'"
+			       @logged-in="registerUser"></login>
 
-				<p>{{ gameState.board.toStr() }}</p>
-
-				<button :disabled="!(placingStone && stoneInSide(selectedStone, 1))"
-						@click="placeStone(selectedStone, 'right')">
-					-)
-				</button>
-			</div>
-
-			<div id="players">
-					<div v-for="player in gameState.players"
-						 :style="{backgroundColor: player == gameState.getActivePlayer() ? 'coral' : 'white'}">
-						<p>{{player.name}}</p>
-						<button v-for="stone in player.stones"
-								@click="stoneOnClick(stone)"
-								:disabled="stoneDisabled(player, stone)">
-							{{stone.toStr()}}
-						</button>
-						<button :disabled="passDisable(player)"
-								@click="passTurn">Paso</button>
-				</div>
+		    <lobby v-if="display === 'lobby'"
+				   v-bind:user="user"
+		   		   @joined-game="joinGame"></lobby>
+		   		   
+		   	<pre-board v-if="display === 'pre-board'"
+					   v-bind:game-session-id="gameSessionId"
+					   @started-game="startGame"></pre-board>
 			
-			</div>
+			<board v-if="display === 'board'"
+				   v-bind:stone-distribution="stoneDistribution"></board>
 		</div>
 		
 		<script src="https://cdn.jsdelivr.net/npm/vue"></script>
 		<script type="application/javascript" src="axios.js"></script>
+		<script type="application/javascript" src="login.js"></script>
+		<script type="application/javascript" src="lobby.js"></script>
+		<script type="application/javascript" src="pre-board.js"></script>
+		<script type="application/javascript" src="domino.js"></script>
+		<script type="application/javascript" src="board.js"></script>
 		<script type="application/javascript" src="main.js"></script>
 	</body>
 </html>

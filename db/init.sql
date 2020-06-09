@@ -34,4 +34,5 @@ INSERT INTO placement(val) VALUES ('RIGHT');
 INSERT INTO game_status(val) VALUES ('FINISHED');
 INSERT INTO game_status(val) VALUES ('OCCURING');
 INSERT INTO game_status(val) VALUES ('CANCELED');
+INSERT INTO game_status(val) VALUES ('WAITING');
 COMMIT;
