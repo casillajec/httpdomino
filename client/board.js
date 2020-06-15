@@ -138,10 +138,7 @@ Vue.component('board', {
 				placement: placement,
 				tstamp: + new Date()
 			})
-			.then(function(response) {
-				console.log('registering stone');
-				app.gameState.board.addStone(stone, placement);
-			})
+			.then(function(response) {})
 			.catch(function (err) {
 				console.log('man your internet is so bad');
 			})
