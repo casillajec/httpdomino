@@ -1,5 +1,6 @@
 # -*- encoding: utf-8 -*-
 #!/usr/bin/env python3
+"""Main."""
 
 import random
 
@@ -14,6 +15,7 @@ app.teardown_appcontext(db.del_conn)
 
 @app.route('/')
 def index():
+	"""Return index.html file as text."""
 	with open('client/index.html', 'r') as f:
 		index_html = f.read()
 		
@@ -21,6 +23,11 @@ def index():
 
 @app.route('/login', methods=['POST'])
 def login():
+	"""Log the user in.
+	
+	If the user is a first timer it will register it, in any case
+	the function returns the user name and id.
+	"""
     request_data = request.json
     user = db.get_user(request_data['userName'])
 
@@ -28,12 +35,14 @@ def login():
 
 @app.route('/game_sessions')
 def game_sessions():
+	"""Return available game sessions."""
     sessions = db.get_active_game_sessions()
 
     return jsonify(sessions)
     
 @app.route('/game_session_players/<game_session_id>')
 def game_session_players(game_session_id):
+	"""Return players in a game session."""
 	
 	players = db.get_game_session_players(game_session_id)
 	
@@ -41,6 +50,7 @@ def game_session_players(game_session_id):
 	
 @app.route('/join_game', methods=['POST'])
 def join_game():
+	"""Register an user as a player on a game session."""
     
     request_data = request.json
 
@@ -51,9 +61,17 @@ def join_game():
 
     return jsonify([])
     
-@app.route('/start_game_session', methods =['POST'])
+@app.route('/start_game_session', methods = ['POST'])
 def start_game_session():
+	"""Start a game session
 	
+	It distributes the initial stones among the players.
+	
+	This endpoint might receive a request per client but it may
+	only be executed once, therefore the first time it is executed
+	it marks the game session as 'OCCURING' and we shall pray that's
+	safe enough.
+	"""
 	request_data = request.json
 	game_session_id = request_data['gameSessionId']
 	
@@ -83,6 +101,24 @@ def start_game_session():
 	
 @app.route('/get_player_stones/<game_session_id>/<user_id>')
 def get_player_stones(game_session_id, user_id):
+	"""Return a player's stones on a particular game session.
+	
+	Also return the name of the players, this endpoint is requested 
+	when the client enters a board (game session starts) and maybe
+	it should be named differently because it should also return
+	the amount of stones each player has.
+	
+	But now that I think about it, that's silly, each player starts with
+	a constant amount of stones and each diff might remove one,
+	which is something that we should be able to easily calculate.
+	
+	That's why documenting is so useful, you can figure stuff out
+	that would have otherwise been a pain.
+	
+	Anyway, it should be renamed, consider something like
+	'get_client_initial_state', because what it returns should
+	vary depending on which client (user) is making the request.
+	"""
 	player_stones = db.get_player_stones(game_session_id, user_id)
 	players = db.get_game_session_players(game_session_id)
 	player_names = [p['user_name'] for p in players]
@@ -96,6 +132,7 @@ def get_player_stones(game_session_id, user_id):
 # TODO NEEDS TO BE TESTED
 @app.route('/register_play', methods=['POST'])
 def register_play():
+	"""Register a play from a player that just made it's play."""
 	request_data = request.json
 	
 	if db.game_session_has_diffs(request_data['gameSessionId']):
@@ -129,6 +166,7 @@ def register_play():
 	
 @app.route('/get_game_state_diffs/<game_session_id>/<version>')
 def get_game_state_diffs(game_session_id, version):
+	"""Return diffs from specified version up until the most recent."""
 	
 	game_state_diffs = db.get_game_state_diffs(game_session_id, version)
 	
@@ -136,6 +174,7 @@ def get_game_state_diffs(game_session_id, version):
 	
 @app.route('/create_game_session', methods = ['POST'])
 def create_game_session():
+	"""Return the id of a new and empty game session."""
 	tstamp = request.json['tstamp']
 	
 	game_session_id = db.create_game_session(tstamp)

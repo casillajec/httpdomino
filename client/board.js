@@ -171,7 +171,6 @@ Vue.component('board', {
 			app.player = new Player(app.playerName, stones);
 			
 			if (doubleDinner) {
-				console.log('registering doubleDinner');
 				app.registerPlay(doubleDinner);
 				app.player.removeStone(doubleDinner);
 			}
