@@ -20,7 +20,9 @@
 					   @started-game="startGame"></pre-board>
 			
 			<board v-if="display === 'board'"
-				   v-bind:stone-distribution="stoneDistribution"></board>
+				   v-bind:game-session-id="gameSessionId"
+				   v-bind:player-name="user.user_name"
+				   v-bind:player-id="user.id"></board>
 		</div>
 		
 		<script src="https://cdn.jsdelivr.net/npm/vue"></script>

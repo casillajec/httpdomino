@@ -2,6 +2,8 @@ let lobbyHtml = `
 <div id="lobby">
 	<h2>{{ user.user_name }}</h2>
 	
+	<button @click="createGame()">Crear</button>
+	
 	<div class="game-session" v-for="gameSession in gameSessions">
 		<p>{{ gameSession.game_status }}</p>
 		<span v-for="player in gameSession.players">{{ player.user_name }}, </span>
@@ -52,13 +54,28 @@ Vue.component('lobby', {
 		canJoinGame: function(gameSession) {
 			let userNames = pluck(gameSession.players, 'user_name');
 			
-			return gameSession.game_status == 'WAITING'
+			/*return gameSession.game_status == 'WAITING'
 				&& (gameSession.players.length < 4 ||
-					userNames.includes(this.user.user_name));
+					userNames.includes(this.user.user_name));*/
+			return gameSession.game_status == 'WAITING'
+				|| gameSession.players.length < 4
+				|| userNames.includes(this.user.user_name);
 		},
 
 		joinGame: function(gameSessionId) {
 			this.$emit('joined-game', gameSessionId);
+		},
+		
+		createGame: function() {
+			let app = this;
+
+			axios.post('/create_game_session', {tstamp: + new Date()})
+			.then(function (response) {
+				app.joinGame(response.data);
+			})
+			.catch(function (err) {
+				console.log('such lack of wealthyness');
+			});
 		}
 	},
 

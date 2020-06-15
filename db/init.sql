@@ -35,4 +35,14 @@ INSERT INTO game_status(val) VALUES ('FINISHED');
 INSERT INTO game_status(val) VALUES ('OCCURING');
 INSERT INTO game_status(val) VALUES ('CANCELED');
 INSERT INTO game_status(val) VALUES ('WAITING');
+
+
+INSERT INTO users(user_name)
+VALUES ('juan'), ('ruisu'), ('milaneso');
+
+INSERT INTO game_session(game_status_id, tstamp)
+VALUES (4, 'now');
+
+INSERT INTO player(user_id, game_session_id, turn)
+VALUES (1, 1, 1), (2, 1, 2), (3, 1, 3);
 COMMIT;

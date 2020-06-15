@@ -43,6 +43,14 @@ Vue.component('pre-board', {
 				return;
 			}
 			
+			let app = this;
+			axios.post('/start_game_session', {
+				gameSessionId: app.gameSessionId
+			})
+			.catch(function(err) {
+				console.log('such patria');
+			})
+			
 			this.$emit('started-game', null);
 		},
 	},

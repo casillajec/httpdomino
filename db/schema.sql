@@ -45,6 +45,7 @@ CREATE TABLE IF NOT EXISTS game_session (
 CREATE TABLE IF NOT EXISTS player (
 	user_id         BIGINT NOT NULL,
 	game_session_id BIGINT NOT NULL,
+	turn			INT    NOT NULL,
 
 	PRIMARY KEY (user_id, game_session_id),
 
@@ -72,7 +73,7 @@ CREATE TABLE IF NOT EXISTS game_state_diff (
 	version         INT       NOT NULL,
 	user_id         BIGINT    NOT NULL,
 	stone_id        BIGINT,
-	placement_id    BIGINT    NOT NULL,
+	placement_id    BIGINT,
 	tstamp          TIMESTAMP NOT NULL,
 
 	PRIMARY KEY (game_session_id, version),

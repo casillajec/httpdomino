@@ -15,9 +15,12 @@ let boardHtml = `
 </div>
 
 <div id="players">
-	<div v-for="player in gameState.players"
-		 :style="{backgroundColor: player == gameState.getActivePlayer() ? 'coral' : 'white'}">
-		<p>{{player.name}}</p>
+
+	<div v-for="lPlayerName of gameState.playerNames"
+		 :style="{backgroundColor: lPlayerName == gameState.getActivePlayer() ? 'coral' : 'white'}">
+		<p>{{lPlayerName}}</p>
+		
+		<div v-if="playerName == lPlayerName">
 		<button v-for="stone in player.stones"
 				@click="stoneOnClick(stone)"
 				:disabled="stoneDisabled(player, stone)">
@@ -25,6 +28,10 @@ let boardHtml = `
 		</button>
 		<button :disabled="passDisable(player)"
 				@click="passTurn">Paso</button>
+		</div>
+		<div v-else>
+			Other player stones
+		</div>
 	</div>			
 </div>
 </div>
@@ -33,15 +40,19 @@ let boardHtml = `
 Vue.component('board', {
 	template: boardHtml,
 	
-	props: ['stoneDistribution'],
+	props: ['gameSessionId', 'playerId', 'playerName'],
 
 	data: function() {
 		return {
 			gameState: null,
+			
+			player: null,
 
 			placingStone: false,
 
-			selectedStone: null
+			selectedStone: null,
+
+			refreshInterval: null,
 		};
 	},
 
@@ -52,16 +63,14 @@ Vue.component('board', {
 		},
 
 		placeStone: function(stone, placement) {
-			let player = this.gameState.getActivePlayer();
-			player.removeStone(stone);
-			this.gameState.board.addStone(stone, placement);
-			this.gameState.nextPlayer();
+			this.registerPlay(stone, placement);
+			this.player.removeStone(stone);
 			this.selectedStone = null;
 			this.placingStone = false;
 		},
 
 		stoneDisabled: function(player, stone) {
-			if (this.gameState.getActivePlayer() != player) {
+			if (this.gameState.getActivePlayer() != this.playerName) {
 				return true;
 			}
 
@@ -98,31 +107,87 @@ Vue.component('board', {
 
 		passTurn: function() {
 			this.gameState.nextPlayer();
+		},
+
+		refresh: function() {
+			let app = this;
+			
+			if (!app.gameState) { return; }
+			
+			axios.get('/get_game_state_diffs/' + 
+			          app.gameSessionId + '/' + 
+			          app.gameState.version)
+			.then(function (response) {
+				let gameStateDiffs = response.data;
+				app.gameState.applyDiffs(gameStateDiffs);
+				app.$forceUpdate();
+			})
+			.catch(function (err) {
+				console.log(err);
+			})
+		},
+		
+		registerPlay: function(stone, placement) {
+			let app = this;
+			
+			axios.post('/register_play', {
+				gameSessionId: app.gameSessionId,
+				userId: app.playerId,
+				version: app.gameState.version,
+				stone: stone.toStr(),
+				placement: placement,
+				tstamp: + new Date()
+			})
+			.then(function(response) {
+				console.log('registering stone');
+				app.gameState.board.addStone(stone, placement);
+			})
+			.catch(function (err) {
+				console.log('man your internet is so bad');
+			})
+						
 		}
 	},
 
 	mounted: function() {
-		// Init game state
-		let players = [], stones = null;
-		let aux;
-		for(let player in this.stoneDistribution) {
-			stones = [];
-			for (let stone of this.stoneDistribution[player]) {
-				aux = stone.split('|');
-				stones.push(new Stone(parseInt(aux[0]), parseInt(aux[1])));
-			}
-
-			players.push(new Player(player, stones));
-		}
-		this.gameState = new GameState(players);
+		let app = this;
 		
-		let player = this.gameState.getActivePlayer();
-		player.removeStone(this.gameState.doubleDinner);
-		this.gameState.board.addStone(this.gameState.doubleDinner);
-		this.gameState.doubleDinner = null;
-		this.gameState.nextPlayer();
+		axios.get('/get_player_stones/' + 
+				   app.gameSessionId + '/' + 
+				   app.playerId)
+		.then(function(response) {
+			
+			app.gameState = new GameState(response.data.player_names);
+			
+			let stones = [],
+				aux = null,
+				tmpStone = null,
+				doubleDinner = null;
+			
+			for (let stone of response.data.player_stones) {
+				aux = stone.split('|');
+				tmpStone = new Stone(parseInt(aux[0]), parseInt(aux[1]));
+				if (tmpStone.is(6, 6)) { doubleDinner = tmpStone; }
+				stones.push(tmpStone);
+			}
+			
+			app.player = new Player(app.playerName, stones);
+			
+			if (doubleDinner) {
+				console.log('registering doubleDinner');
+				app.registerPlay(doubleDinner);
+				app.player.removeStone(doubleDinner);
+			}
+		})
+		.catch(function(err) {
+			console.log('such patria');
+		});
 		
 		// Refresh interval
-		// TODO
+		this.refreshInterval = setInterval(this.refresh, REFRESH_RATE);
+	},
+
+	destroyed: function() {
+		clearInterval(this.refreshInterval);
 	}
 })

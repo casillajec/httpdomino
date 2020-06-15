@@ -41,15 +41,7 @@ var app = new Vue({
 		
 		startGame: function() {
 			let app = this;
-			
-			axios.get('/get_stone_distribution/' + this.gameSessionId)
-			.then(function(response) {
-				app.stoneDistribution = response.data;
-				app.display = 'board';
-			})
-			.catch(function(err) {
-				console.log('wow such lack of internet');
-			})
+			app.display = 'board';
 		}
 	}
 });

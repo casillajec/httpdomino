@@ -13,7 +13,8 @@ Stone.prototype = {
 	},
 	
 	toStr: function() {
-		return '[' + this.sideup + '|' + this.sidedown + ']';
+		//return '[' + this.sideup + '|' + this.sidedown + ']';
+		return this.sideup + '|' + this.sidedown;
 	}
 }
 
@@ -163,34 +164,55 @@ DominoTree.prototype = {
 }
 
 // Should be initialized with currentPlayer
-var GameState = function(players) {
-	this.players = players;
-	
-	for (let i = 0; i < players.length; i++) {
-		
-		if (this.players[i].hasStone(6, 6)) {
-			this.doubleDinner = this.players[i].getStone(6, 6);
-			this.activePlayer = i;
-			this.currentPlayer = players[i];
-			break;
-		}
-	}
-	
+var GameState = function(playerNames) {
+	this.playerNames = playerNames;
+
+	this.locked = false;
 }
 
 GameState.prototype = {
 	board: new DominoTree(),
-
-	doubleDinner: null,
+	
+	activePlayer: 0,
+	
+	version: 0,
+	
+	gameSessionId: null,
 	
 	nextPlayer: function() {
 		this.activePlayer += 1
-		if (this.activePlayer > this.players.length - 1) {
+		if (this.activePlayer > this.playerNames.length - 1) {
 			this.activePlayer = 0;
 		}
 	},
 	
 	getActivePlayer: function() {
-		return this.players[this.activePlayer];
+		return this.playerNames[this.activePlayer];
 	},
+
+	applyDiffs: function(diffs) {
+		//while (this.locked) {};
+		this.locked = true;
+		
+		let aux = null, placement = null;
+		for(let diff of diffs) {
+			if (diff.version != this.version + 1) { continue; }
+
+			if (diff.stone) {
+				aux = diff.stone.split('|');
+				
+				placement = diff.placement ? diff.placement.toLowerCase() : diff.placement;
+				
+				this.board.addStone(
+					new Stone(parseInt(aux[0]), parseInt(aux[1])),
+					placement
+				);
+			}
+			
+			this.nextPlayer();
+			this.version++;
+		}
+
+		this.locked = false;
+	}
 }
