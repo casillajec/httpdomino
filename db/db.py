@@ -1,5 +1,6 @@
 # -*- encoding: utf-8 -*-
 #!/usr/bin/env python3
+""" Handle all DB transactions and manage connectios. """
 
 from collections import defaultdict
 from itertools import chain
@@ -11,9 +12,12 @@ import sqlite3
 # Eventually we might want to implement a DB connection pool
 # to avoid the overhead of creating one each time DB iteraction
 # is needed, which is meant to be very often
-MAX_CONNECTIONS = 12
 
 def get_conn():
+	"""Return DB connection object form g
+	
+	If there is none, create it.
+	"""
 	if 'conn' not in g:
 		g.conn = sqlite3.connect(
 			'db/domino.db',
@@ -24,27 +28,51 @@ def get_conn():
 
 	return g.conn
 
-# What is e?
 def del_conn(e = None):
+	"""Close DB connection.
+	
+	This method is called before a request gets sent.
+	
+	Args
+	----
+	e: notsure
+		notsure
+	"""
 	conn = g.pop('conn', None)
 
 	if conn is not None:
 		conn.close()
 
 def row2dict(row):
+	"""Transform sqlite3.Row to dict."""
 	return dict(zip(row.keys(), row))
 
 def rows2dicts(rows):
+	"""Transform list of sqlite3.Row s to list of dicts."""
 	return list(map(row2dict, rows))
 	
 def rowtodic(row):
+	"""Transform slqite3.Row to dict."""
 	return dict(zip(row.keys(), row))
 	
 def lmap(func, it):
+	"""List wrapper on map."""
 	return list(map(func, it))
 
 def get_user(user_name):
-
+	"""Return user with name user_name.
+	
+	If no user with that name is found on the DB, it gets registered
+	and returnted.
+	
+	Args
+	----
+	user_name: string
+	
+	Returns
+	-------
+	user: dict
+	"""
 	user_name = user_name.lower()
 	
 	conn = get_conn()
@@ -66,11 +94,20 @@ def get_user(user_name):
 		c.execute('COMMIT;')
 		user = {'id': c.lastrowid, 'user_name': user_name}
 	else:
-		user = row2dict(user)
+		user = rowtodic(user)
 
 	return user
 
 def get_active_game_sessions():
+	"""Return active game session
+	
+	An active game session is one that is either WAITING to start
+	or is currently OCCURING.
+	
+	Returns
+	-------
+	game_sessions: list(dict)
+	"""
 	conn = get_conn()
 	c = conn.cursor()
 	c.execute(textwrap.dedent('''\
@@ -107,7 +144,16 @@ def get_active_game_sessions():
 	return game_sessions
 	
 def get_game_session_players(game_session_id):
+	"""Return players in a game_session.
 	
+	Args
+	----
+	game_session_id: int
+	
+	Returns
+	-------
+	players: list: dict
+	"""
 	conn = get_conn()
 	c = conn.cursor()
 	sql = textwrap.dedent('''\
@@ -125,7 +171,13 @@ def get_game_session_players(game_session_id):
 	return players
 
 def insert_user_game_session(user_id, game_session_id):
-
+	"""Insert an user into a game_session.
+	
+	Args
+	----
+	user_id: int
+	game_session_id: int
+	"""
 	conn = get_conn()
 	c = conn.cursor()
 	sql = textwrap.dedent('''\
@@ -151,6 +203,7 @@ def insert_user_game_session(user_id, game_session_id):
 	c.close()
 	
 def get_stone_enums():
+	""" Return all stone enums. """
 	
 	c = get_conn().cursor()
 	c.execute(textwrap.dedent('''\
@@ -163,6 +216,16 @@ def get_stone_enums():
 	return stones
 
 def get_last_game_state_diff(game_session_id):
+	"""Return the last diff of a game_session.
+	
+	Args
+	----
+	game_session_id: int
+	
+	Returns
+	-------
+	game_state_diff: dict
+	"""
 	c = get_conn().cursor()
 	
 	sql = textwrap.dedent('''\
@@ -184,6 +247,16 @@ def get_last_game_state_diff(game_session_id):
 	return game_state_diff
 	
 def get_next_player(game_session_id):
+	"""Return the player that goes next in a game session.
+	
+	Args
+	----
+	game_session_id: int
+	
+	Returns
+	-------
+	next_player: dict
+	"""
 	c = get_conn().cursor()
 	
 	sql = textwrap.dedent('''\
@@ -207,6 +280,17 @@ def get_next_player(game_session_id):
 	return next_player
 
 def get_game_state_diffs(game_session_id, version):
+	"""Return all diffs of game_session starting at specified version.
+	
+	Args
+	----
+	game_session_id: int
+	version: int
+	
+	Returns
+	------
+	game_state_diffs: list(dict)
+	"""
 	c = get_conn().cursor()
 	
 	sql = textwrap.dedent('''\
@@ -228,6 +312,14 @@ def get_game_state_diffs(game_session_id, version):
 	return game_state_diffs
 
 def assign_stones_player(user_id, game_session_id, stone_ids):
+	"""Assigns initial stones to a player.
+	
+	Args
+	----
+	user_id: int
+	game_session_id: int
+	stone_ids: list(int)
+	"""
 	c = get_conn().cursor()
 	
 	sql = textwrap.dedent('''\
@@ -241,6 +333,7 @@ def assign_stones_player(user_id, game_session_id, stone_ids):
 	c.close()
 	
 def mark_game_session_started(game_session_id):
+	""" Mark specified game_session as OCCURING on DB. """
 	c = get_conn().cursor()
 	
 	sql = textwrap.dedent('''\
@@ -263,6 +356,16 @@ def mark_game_session_started(game_session_id):
 	c.close()
 	
 def get_game_session_status(game_session_id):
+	"""Return the status of specified game_session.
+	
+	Args
+	----
+	game_session_id: int
+	
+	Returns
+	-------
+	game_session_status: str
+	"""
 	c = get_conn().cursor()
 	
 	sql = textwrap.dedent('''\
@@ -278,6 +381,17 @@ def get_game_session_status(game_session_id):
 	return game_session_status['val']
 	
 def get_player_stones(game_session_id, user_id):
+	"""Return the stones that a player starts with.
+	
+	Args
+	----
+	game_session_id: int
+	user_id: int
+	
+	Returns
+	-------
+	player_stones: list(str)
+	"""
 	c = get_conn().cursor()
 	
 	sql = textwrap.dedent('''\
@@ -295,6 +409,7 @@ def get_player_stones(game_session_id, user_id):
 	return player_stones
 	
 def game_session_has_diffs(game_session_id):
+	""" Return wether the specified game session has diffs. """
 	c = get_conn().cursor() 
 	
 	sql = textwrap.dedent('''\
@@ -309,6 +424,7 @@ def game_session_has_diffs(game_session_id):
 	return has_diffs
 
 def create_game_session(tstamp):
+	"""Create a new, empty game session and return it's id."""
 	c = get_conn().cursor()
 	
 	c.execute(textwrap.dedent('''\
@@ -331,6 +447,16 @@ def create_game_session(tstamp):
 	return game_session_id
 	
 def register_play(game_session_id, user_id, stone, placement, tstamp):
+	""" Register a play that a player made.
+	
+	Args
+	----
+	game_session_id: int
+	user_id: int
+	stone: str
+	placement: str
+	tstamp: int
+	"""
 	c = get_conn().cursor()
 	
 	stone_id = None
