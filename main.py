@@ -24,22 +24,22 @@ def index():
 @app.route('/login', methods=['POST'])
 def login():
 	"""Log the user in.
-	
+
 	If the user is a first timer it will register it, in any case
 	the function returns the user name and id.
 	"""
-    request_data = request.json
-    user = db.get_user(request_data['userName'])
+	request_data = request.json
+	user = db.get_user(request_data['userName'])
 
-    return jsonify(user)
+	return jsonify(user)
 
 @app.route('/game_sessions')
 def game_sessions():
 	"""Return available game sessions."""
-    sessions = db.get_active_game_sessions()
+	sessions = db.get_active_game_sessions()
 
-    return jsonify(sessions)
-    
+	return jsonify(sessions)
+	
 @app.route('/game_session_players/<game_session_id>')
 def game_session_players(game_session_id):
 	"""Return players in a game session."""
@@ -51,16 +51,16 @@ def game_session_players(game_session_id):
 @app.route('/join_game', methods=['POST'])
 def join_game():
 	"""Register an user as a player on a game session."""
-    
-    request_data = request.json
+	
+	request_data = request.json
 
-    db.insert_user_game_session(
-        user_id = request_data['userId'],
-        game_session_id = request_data['gameSessionId']
-    )
+	db.insert_user_game_session(
+		user_id = request_data['userId'],
+		game_session_id = request_data['gameSessionId']
+	)
 
-    return jsonify([])
-    
+	return jsonify([])
+	
 @app.route('/start_game_session', methods = ['POST'])
 def start_game_session():
 	"""Start a game session
