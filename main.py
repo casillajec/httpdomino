@@ -5,10 +5,13 @@
 import random
 
 from flask import Flask, request, jsonify
+
 import db
+from login import login_api
 
 app = Flask(__name__, static_url_path = '', static_folder = 'client')
 app.teardown_appcontext(db.del_conn)
+app.register_blueprint(login_api)
 
 #with open('client/index.html', 'r') as f:
 #	index_html = f.read()
@@ -20,18 +23,6 @@ def index():
 		index_html = f.read()
 		
 	return index_html
-
-@app.route('/login', methods=['POST'])
-def login():
-	"""Log the user in.
-
-	If the user is a first timer it will register it, in any case
-	the function returns the user name and id.
-	"""
-	request_data = request.json
-	user = db.get_user(request_data['userName'])
-
-	return jsonify(user)
 
 @app.route('/game_sessions')
 def game_sessions():
