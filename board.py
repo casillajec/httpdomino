@@ -7,6 +7,7 @@ import db
 
 board_api = Blueprint('board_api', __name__)
 
+'''
 @board_api.route('/get_player_stones/<game_session_id>/<user_id>')
 def get_player_stones(game_session_id, user_id):
 	"""Return a player's stones on a particular game session.
@@ -35,6 +36,7 @@ def get_player_stones(game_session_id, user_id):
 		'player_stones': player_stones,
 		'player_names': player_names
 	})
+'''
 	
 # TODO NEEDS TO BE TESTED
 @board_api.route('/register_play', methods=['POST'])

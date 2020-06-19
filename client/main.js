@@ -4,13 +4,13 @@ var app = new Vue({
 	el: '#app',
 	data: function() {
 		return {
-			gameOcurring: false,
-
 			user: null,
 			
 			gameSessionId: null,
 			
-			stoneDistribution: null,
+			stones: null,
+			
+			playerNames: null,
 
 			display: 'login',
 		};
@@ -39,8 +39,10 @@ var app = new Vue({
 			})
 		},
 		
-		startGame: function() {
+		startGame: function(stones, playerNames) {
 			let app = this;
+			app.stones = stones;
+			app.playerNames = playerNames;
 			app.display = 'board';
 		}
 	}

@@ -40,7 +40,7 @@ let boardHtml = `
 Vue.component('board', {
 	template: boardHtml,
 	
-	props: ['gameSessionId', 'playerId', 'playerName'],
+	props: ['gameSessionId', 'playerId', 'playerName', 'stones', 'playerNames'],
 
 	data: function() {
 		return {
@@ -147,39 +147,29 @@ Vue.component('board', {
 	},
 
 	mounted: function() {
-		let app = this;
+		this.gameState = new GameState(this.playerNames);
 		
-		axios.get('/get_player_stones/' + 
-				   app.gameSessionId + '/' + 
-				   app.playerId)
-		.then(function(response) {
+		let stones = [],
+			aux = null,
+			tmpStone = null,
+			doubleDinner = null;
+		
+		for (let stone of this.stones) {
+			aux = stone.split('|');
+			tmpStone = new Stone(parseInt(aux[0]), parseInt(aux[1]));
+			if (tmpStone.is(6, 6)) { doubleDinner = tmpStone; }
+			stones.push(tmpStone);
+		}
 			
-			app.gameState = new GameState(response.data.player_names);
-			
-			let stones = [],
-				aux = null,
-				tmpStone = null,
-				doubleDinner = null;
-			
-			for (let stone of response.data.player_stones) {
-				aux = stone.split('|');
-				tmpStone = new Stone(parseInt(aux[0]), parseInt(aux[1]));
-				if (tmpStone.is(6, 6)) { doubleDinner = tmpStone; }
-				stones.push(tmpStone);
-			}
-			
-			app.player = new Player(app.playerName, stones);
-			
-			if (doubleDinner) {
-				app.registerPlay(doubleDinner);
-				app.player.removeStone(doubleDinner);
-			}
-		})
-		.catch(function(err) {
-			console.log('such patria');
-		});
+		this.player = new Player(this.playerName, stones);
+		
+		if (doubleDinner) {
+			this.registerPlay(doubleDinner);
+			this.player.removeStone(doubleDinner);
+		}
 		
 		// Refresh interval
+		this.refresh(REFRESH_RATE);
 		this.refreshInterval = setInterval(this.refresh, REFRESH_RATE);
 	},
 

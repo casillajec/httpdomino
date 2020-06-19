@@ -44,18 +44,23 @@ Vue.component('pre-board', {
 			}
 			
 			let app = this;
+			let stones = null, playerNames = null;
 			axios.post('/start_game_session', {
-				gameSessionId: app.gameSessionId
+				gameSessionId: app.gameSessionId,
+				userId: app.user.id
 			})
-			.catch(function(err) {
+			.then(function(response) {
+				stones = response.data.player_stones;
+				playerNames = response.data.player_names;
+				app.$emit('started-game', stones, playerNames);
+				
+			}, function(err) {
 				console.log('such patria');
 			})
-			
-			this.$emit('started-game', null);
 		},
 	},
 	
-	props: ['gameSessionId'],
+	props: ['gameSessionId', 'user'],
 	
 	data: function() {
 		return {

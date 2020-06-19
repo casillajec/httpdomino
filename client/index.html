@@ -17,12 +17,15 @@
 		   		   
 		   	<pre-board v-if="display === 'pre-board'"
 					   v-bind:game-session-id="gameSessionId"
+					   v-bind:user="user"
 					   @started-game="startGame"></pre-board>
 			
 			<board v-if="display === 'board'"
 				   v-bind:game-session-id="gameSessionId"
 				   v-bind:player-name="user.user_name"
-				   v-bind:player-id="user.id"></board>
+				   v-bind:player-id="user.id"
+				   v-bind:stones="stones"
+				   v-bind:player-names="playerNames"></board>
 		</div>
 		
 		<script src="https://cdn.jsdelivr.net/npm/vue"></script>
