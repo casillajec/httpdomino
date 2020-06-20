@@ -5,10 +5,10 @@
 from flask import Flask, request, jsonify
 
 import db
-from login import login_api
-from lobby import lobby_api
-from preboard import preboard_api
-from board import board_api
+from apis.login import login_api
+from apis.lobby import lobby_api
+from apis.preboard import preboard_api
+from apis.board import board_api
 
 app = Flask(__name__, static_url_path = '', static_folder = 'client')
 app.teardown_appcontext(db.del_conn)
